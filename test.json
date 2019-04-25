@@ -1,0 +1,24 @@
+[
+  {
+    "Name": "standard-300x250",
+    "Size": "300x250",
+    "Width": 300,
+    "Height": 250,
+    "FrameLimit": 0,
+    "Start": [],
+    "Middle": [],
+    "End": [],
+    "BaseSize": 8000
+  },
+  {
+    "Name": "standard-300x600",
+    "Size": "300x600",
+    "Width": 300,
+    "Height": 600,
+    "FrameLimit": 0,
+    "Start": [],
+    "Middle": [],
+    "End": [],
+    "BaseSize": 8000
+  }
+]

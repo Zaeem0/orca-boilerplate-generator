@@ -1,0 +1,37 @@
+get template name
+for example afwb,business minded
+for each template given make a creative template json
+make frames for each template, given number of frames per template
+
+generate thumbnail svgs for each frame name
+
+F-input template group name
+F-input template names with + sign for more
+F-enter the sizes you want
+F-enter start middle and end frame names, auto set limit-user can increase
+B-create folder with template group name and populate with boilerplate folder structure-GROUP
+    CreativeTemplates
+    FrameTemplates
+    GlobalTemplates
+    ThumbnailImages
+B-creativetemplate json with object for each template-sizes
+    set start middle and end frames and a limit, rest boilerplate
+B-GlobalTemplates, empty template json with size as filename
+B-ThumbnailImages for each size
+
+structures-[]Sizes,[start,middle,end]Framenames,limit
+premade template[]config[]json
+Have a placeholder folder with GROUP insert that into a dynamic 
+created template group name folder
+append empty jsons with dynamic filenames
+creativetemplates just append json objects into a basic structure and set filename
+
+to generate send one payload to service in the form 
+Sizes : 300x250,300x600. ...
+Template Group Name: "Afwb-orca"
+Frames: [
+    "start": ["one",..],
+    "middle: ["middle","two"..]
+    "end:    ["Final",..]   
+]
+Limit: 42
