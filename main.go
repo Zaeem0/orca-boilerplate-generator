@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strconv"
+	"strings"
 )
 
 type CreativeTemplates struct {
@@ -19,35 +21,49 @@ type CreativeTemplates struct {
 	BaseSize      int
 }
 
-func EmptyCreativeTemplateObject() CreativeTemplates {
-	obj := CreativeTemplates{}
-	obj.Start = []string{}
-	obj.Middle = []string{}
-	obj.End = []string{}
-	obj.BaseSize = 8000
-	return obj
-}
-
 func main() {
+	//need to create a file and folder rather than appending to current test file
 	file, _ := ioutil.ReadFile("creativetemplate.json")
 	fmt.Println(string(file))
 
 	var tempJSON []CreativeTemplates
+	var obj CreativeTemplates
 	json.Unmarshal(file, &tempJSON)
 
-	// name := "statefarm-business"
-	// sizes := []string{"160x600", "300x250", "300x600"}
-	// limit := 5
-	// min := 1
+	//hardcoded values, use user input flags/os args for now then form inputs
+	name := "statefarm-business"
+	sizes := []string{"160x600", "300x250", "300x600"}
+	start := []string{}
+	middle := []string{"1", "2", "3"}
+	end := []string{}
+	limit := 5
+	min := 1
+	base := 6000
 
-	// fmt.Printf("%#v", CreativeTemplate[0])
-	// CreativeTemplate[0].Name = "Changed name"
-	// frames := []string{}
-	// CreativeTemplate[0].Start = frames
-	tempJSON = append(tempJSON, EmptyCreativeTemplateObject())
-	// fmt.Println("\n", CreativeTemplate[0].Start)
-	// fmt.Println("\n", CreativeTemplate[0])
+	for _, size := range sizes {
+		obj = CreativeTemplates{}
+		obj.Name = fmt.Sprintf("%s-%s", name, size)
+		obj.Size = size
+		//set width and height properties
+		wxh := strings.Split(size, "x")
+		width, _ := strconv.Atoi(wxh[0])
+		height, _ := strconv.Atoi(wxh[1])
+		obj.Width = width
+		obj.Height = height
 
+		obj.FrameLimit = limit
+		obj.FrameMinCount = min
+
+		//frames
+		obj.Start = start
+		obj.Middle = middle
+		obj.End = end
+		obj.BaseSize = base
+
+		tempJSON = append(tempJSON, obj)
+	}
+
+	//indented JSON with 2 spaces
 	file, _ = json.MarshalIndent(tempJSON, "", "  ")
 	_ = ioutil.WriteFile("creativetemplate.json", file, 0644)
 }
