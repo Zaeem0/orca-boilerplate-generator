@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -21,16 +22,24 @@ type CreativeTemplates struct {
 	BaseSize      int
 }
 
+type frame struct {
+	template []interface{}
+	config   []interface{}
+}
+
 func main() {
-	//need to create a file and folder rather than appending to current test file
-	file, _ := ioutil.ReadFile("creativetemplate.json")
-	fmt.Println(string(file))
+	//Octal value 0700 for user
+	os.Mkdir("./generated-template", 0700)
+	os.Mkdir("./generated-template/CreativeTemplates", 0700)
+	os.Mkdir("./generated-template/FrameTemplates", 0700)
+	os.Mkdir("./generated-template/GlobalTemplates", 0700)
+	os.Mkdir("./generated-template/ThumbnailImages", 0700)
 
 	var tempJSON []CreativeTemplates
 	var obj CreativeTemplates
-	json.Unmarshal(file, &tempJSON)
 
 	//hardcoded values, use user input flags/os args for now then form inputs
+	templateName := "statefarm"
 	name := "statefarm-business"
 	sizes := []string{"160x600", "300x250", "300x600"}
 	start := []string{}
@@ -64,6 +73,7 @@ func main() {
 	}
 
 	//indented JSON with 2 spaces
-	file, _ = json.MarshalIndent(tempJSON, "", "  ")
-	_ = ioutil.WriteFile("creativetemplate.json", file, 0644)
+	data, _ := json.MarshalIndent(tempJSON, "", "  ")
+	//need to create a file and folder rather than just writing to a test file
+	_ = ioutil.WriteFile(fmt.Sprintf("./generated-template/CreativeTemplates/%s.json", templateName), data, 0644)
 }
