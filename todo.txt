@@ -1,3 +1,5 @@
+clickout logic set in globals as a user option
+
 get template name
 for example afwb,business minded
 for each template given make a creative template json
