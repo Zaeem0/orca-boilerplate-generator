@@ -5,24 +5,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	svg "github.com/ajstarks/svgo"
+	"github.com/gorilla/mux"
 )
 
 type CreativeTemplates struct {
-	Name          string
-	Size          string
-	Width         int
-	Height        int
-	FrameLimit    int
-	FrameMinCount int
-	Start         []string
-	Middle        []string
-	End           []string
-	BaseSize      int
+	Name          string   `json:"name"`
+	Size          string   `json:"size"`
+	Width         int      `json:"width"`
+	Height        int      `json:"height"`
+	FrameLimit    int      `json:"frameLimit"`
+	FrameMinCount int      `json:"frameMinCount"`
+	Start         []string `json:"start"`
+	Middle        []string `json:"middle"`
+	End           []string `json:"end"`
+	BaseSize      int      `json:"baseSize"`
 }
 
 type frame struct {
@@ -30,38 +33,35 @@ type frame struct {
 	Config   []string `json:"config"`
 }
 type CreativeTemplateData struct {
-	templateGroupName string
-	templateSet       string
-	sizes             []string
-	name              string
-	width             int
-	height            int
-	limit             int
-	min               int
-	start             []string
-	middle            []string
-	end               []string
-	frames            []string
-	base              int
+	TemplateGroupName string   `json:"templateGroupName"`
+	TemplateSet       string   `json:"templateSet"`
+	Sizes             []string `json:"sizes"`
+	Name              string   `json:"templateName"`
+	Limit             int      `json:"frameLimit"`
+	Min               int      `json:"frameMinCount"`
+	Start             []string `json:"start"`
+	Middle            []string `json:"middle"`
+	End               []string `json:"end"`
+	Base              int      `json:"baseSize"`
+
+	Frames []string
 }
 
 func main() {
-	//hardcoded values, use user input flags/os args for now then form inputs
-	data := CreativeTemplateData{
-		templateGroupName: "statefarm-business-orca",
-		templateSet:       "statefarm",
-		name:              "some-business",
-		sizes:             []string{"160x600", "300x250", "300x600"},
-		start:             []string{"another one", "start"},
-		middle:            []string{"1-mid", "copy-2", "3"},
-		end:               []string{"endframe", "99"},
-		limit:             5,
-		min:               1,
-		base:              6000,
-	}
-	data.frames = append(data.frames, data.start...)
-	data.frames = append(data.frames, data.middle...)
-	data.frames = append(data.frames, data.end...)
+
+	router := mux.NewRouter().StrictSlash(true)
+	router.
+		Name("posting data").
+		Methods("POST").
+		Path("/").
+		HandlerFunc(ReceiveData)
+	log.Fatal(http.ListenAndServe(":8080", router))
+}
+
+func generateBoilerplate(data CreativeTemplateData) {
+	data.Frames = append(data.Frames, data.Start...)
+	data.Frames = append(data.Frames, data.Middle...)
+	data.Frames = append(data.Frames, data.End...)
 
 	//Octal value 0700 for user
 	os.RemoveAll("./tmp")
@@ -72,12 +72,38 @@ func main() {
 	os.Mkdir("./tmp/ThumbnailImages", 0700)
 
 	generateCreativeTemplates(data)
-	generateFrameTemplates(data.sizes, data.frames)
-	generateGlobalTemplates(data.sizes)
-	generateThumbnails(data.sizes, data.frames)
+	generateFrameTemplates(data.Sizes, data.Frames)
+	generateGlobalTemplates(data.Sizes)
+	generateThumbnails(data.Sizes, data.Frames)
 
-	os.RemoveAll(fmt.Sprintf("./%s", data.templateGroupName))
-	os.Rename("./tmp", fmt.Sprintf("./%s", data.templateGroupName))
+	os.RemoveAll(fmt.Sprintf("./%s", data.TemplateGroupName))
+	os.Rename("./tmp", fmt.Sprintf("./%s", data.TemplateGroupName))
+}
+
+func ReceiveData(w http.ResponseWriter, r *http.Request) {
+	var data CreativeTemplateData
+	if DecodeBody(w, r, &data) != nil {
+		return
+	}
+	log.Println(data)
+	generateBoilerplate(data)
+	w.WriteHeader(http.StatusCreated)
+	ResponseJSON(w, data)
+}
+
+func DecodeBody(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		ResponseJSON(w, err)
+		return err
+	}
+	return nil
+}
+
+func ResponseJSON(w http.ResponseWriter, data interface{}) {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Println(err)
+	}
 }
 
 func emptyFrame() []byte {
@@ -133,9 +159,9 @@ func generateCreativeTemplates(data CreativeTemplateData) {
 	var tempJSON []CreativeTemplates
 	var obj CreativeTemplates
 
-	for _, size := range data.sizes {
+	for _, size := range data.Sizes {
 		obj = CreativeTemplates{}
-		obj.Name = fmt.Sprintf("%s-%s", data.name, size)
+		obj.Name = fmt.Sprintf("%s-%s", data.Name, size)
 		obj.Size = size
 		//set width and height properties
 		wxh := strings.Split(size, "x")
@@ -144,19 +170,19 @@ func generateCreativeTemplates(data CreativeTemplateData) {
 		obj.Width = width
 		obj.Height = height
 
-		obj.FrameLimit = data.limit
-		obj.FrameMinCount = data.min
+		obj.FrameLimit = data.Limit
+		obj.FrameMinCount = data.Min
 
 		//frames
-		obj.Start = data.start
-		obj.Middle = data.middle
-		obj.End = data.end
-		obj.BaseSize = data.base
+		obj.Start = data.Start
+		obj.Middle = data.Middle
+		obj.End = data.End
+		obj.BaseSize = data.Base
 
 		tempJSON = append(tempJSON, obj)
 	}
 
 	//indented JSON with 2 spaces
 	jsonData, _ := json.MarshalIndent(tempJSON, "", "  ")
-	_ = ioutil.WriteFile(fmt.Sprintf("./tmp/CreativeTemplates/%s.json", data.templateSet), jsonData, 0644)
+	_ = ioutil.WriteFile(fmt.Sprintf("./tmp/CreativeTemplates/%s.json", data.TemplateSet), jsonData, 0644)
 }
