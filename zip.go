@@ -10,16 +10,19 @@ import (
 
 func createZip(templateName string) {
 
+	//get files from standard folder
 	files, err := listFiles(fmt.Sprintf("./%s", templateName))
 	if err != nil {
 		panic(err)
 	}
 
-	zipMe(files, fmt.Sprintf("%s.zip", templateName))
+	zipMe(files, fmt.Sprintf("./downloads/%s.zip", templateName))
 
 	for _, f := range files {
 		fmt.Println(f)
 	}
+	//delete folder now that zip is created
+	os.RemoveAll(fmt.Sprintf("./%s", templateName))
 	fmt.Println("Done!")
 }
 

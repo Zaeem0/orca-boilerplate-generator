@@ -2,9 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -53,7 +58,38 @@ func main() {
 		Methods("POST").
 		Path("/").
 		HandlerFunc(ReceiveData)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	router.
+		Name("download zip").
+		Methods("GET").
+		Path("/download/{templateGroupName}").
+		HandlerFunc(DownloadZip)
+
+	methods := []string{"GET", "POST", "PUT", "DELETE"}
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedMethods(methods))(router)))
+}
+
+func DownloadZip(w http.ResponseWriter, r *http.Request) {
+	zipfile := mux.Vars(r)["templateGroupName"]
+	f, err := os.Open(fmt.Sprintf("./downloads/%s.zip", zipfile))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	_, file := filepath.Split(f.Name())
+
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file))
+
+	// copy the file contents to the http Writer
+	_, err = io.Copy(w, f)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func ReceiveData(w http.ResponseWriter, r *http.Request) {

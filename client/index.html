@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      button,p{display:none;}
+    </style>
+  </head>
+  <body>
+    <form class="myform">
+      <div>
+        Template group name:
+        <input
+          type="text"
+          name="templateGroupName"
+          value="statefarm-business-orca"
+        />
+      </div>
+      <div>
+        Template set:
+        <input type="text" name="templateSet" value="statefarm" />
+      </div>
+      <div>
+        sizes(split by comma):
+        <input type="text" name="sizes" value="160x600, 300x250, 300x600" />
+      </div>
+      <div>
+        template name:
+        <input type="text" name="templateName" value="AFWB-variant" />
+      </div>
+      <div>
+        frameLimit:
+        <input type="text" name="frameLimit" value="5" />
+      </div>
+      <div>
+        frameMinCount:
+        <input type="text" name="frameMinCount" value="1" />
+      </div>
+      <div>
+        start(split by comma):
+        <input type="text" name="start" value="another one, start" />
+      </div>
+      <div>
+        middle(split by comma):
+        <input type="text" name="middle" value="1-mid,copy-2, 3" />
+      </div>
+      <div>
+        end(split by comma):
+        <input type="text" name="end" value="endframe, 99" />
+      </div>
+      <div>
+        baseSize:
+        <input type="text" name="baseSize" value="8000" />
+      </div>
+      <input type="submit" value="Submit" />
+    </form>
+    <br />
+    <p class="dl">If template options are changed then you must submit again before downloading.</p>
+    <button class="dl"><a class="zip" download="template.zip" href="http://localhost:8080/download">Download</a></button>
+    <script>
+      var object = {};
+      document.querySelector(".myform").addEventListener("submit", myScript);
+      function myScript(e) {
+        e.preventDefault();
+        var formData = new FormData(e.target);
+        formData.forEach((value, key) => {
+          object[key] = value;
+        });
+
+        // clear whitespace and split by comma into an array
+        object.sizes = object.sizes.replace(/\s+/g, "");
+        object.sizes = object.sizes.split(",");
+        object.start = object.start.replace(/\s+/g, "");
+        object.start = object.start.split(",");
+        object.middle = object.middle.replace(/\s+/g, "");
+        object.middle = object.middle.split(",");
+        object.end = object.end.replace(/\s+/g, "");
+        object.end = object.end.split(",");
+
+        //str to int
+        object.frameLimit = Number(object.frameLimit);
+        object.frameMinCount = Number(object.frameMinCount);
+        object.baseSize = Number(object.baseSize);
+
+        console.log(object);
+        var json = JSON.stringify(object);
+        send(json);
+
+        document.querySelector("p").style.display = "block";
+        var downloadBtn = document.querySelector("button")
+        var zip = document.querySelector(".zip")
+        downloadBtn.style.display = "block";
+        zip.setAttribute("download", object.templateGroupName + ".zip");
+        zip.setAttribute("href", "http://localhost:8080/download/" + object.templateGroupName);
+      }
+
+      function send(data) {
+        fetch("http://localhost:8080/", {
+          method: "post",
+          body: data
+        }).then(function(response) {
+          return response.json();
+        });
+      }
+    </script>
+  </body>
+</html>
