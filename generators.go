@@ -18,7 +18,6 @@ func generateBoilerplate(data CreativeTemplateData) {
 	data.Frames = append(data.Frames, data.End...)
 
 	//Octal value 0700 for user
-	os.RemoveAll("./tmp")
 	os.Mkdir("./tmp", 0700)
 	os.Mkdir("./tmp/CreativeTemplates", 0700)
 	os.Mkdir("./tmp/FrameTemplates", 0700)
@@ -30,8 +29,7 @@ func generateBoilerplate(data CreativeTemplateData) {
 	generateGlobalTemplates(data.Sizes)
 	generateThumbnails(data.Sizes, data.Frames)
 
-	os.RemoveAll(fmt.Sprintf("./%s", data.TemplateGroupName))
-	os.Rename("./tmp", fmt.Sprintf("./%s", data.TemplateGroupName))
+	// os.Rename("./tmp", fmt.Sprintf("./%s", data.TemplateGroupName))
 }
 
 func emptyFrame(clickout bool) []byte {

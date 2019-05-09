@@ -72,13 +72,11 @@ func DownloadZip(w http.ResponseWriter, r *http.Request) {
 	zipfile := mux.Vars(r)["templateGroupName"]
 	f, err := os.Open(fmt.Sprintf("./downloads/%s.zip", zipfile))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		ResponseJSON(w, []string{fmt.Sprintf("Failed to download: %s.zip", zipfile)})
+		return
 	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
 
 	_, file := filepath.Split(f.Name())
 
@@ -97,13 +95,20 @@ func ReceiveData(w http.ResponseWriter, r *http.Request) {
 	if DecodeBody(w, r, &data) != nil {
 		return
 	}
+	data.cleanData()
 	log.Println(data)
-
 	generateBoilerplate(data)
 	createZip(data.TemplateGroupName)
 
 	w.WriteHeader(http.StatusCreated)
 	ResponseJSON(w, data)
+}
+
+func (data *CreativeTemplateData) cleanData() {
+	if data.TemplateGroupName == "" {
+		data.TemplateGroupName = "unknown"
+	}
+	//More checking of data to be done...
 }
 
 func DecodeBody(w http.ResponseWriter, r *http.Request, data interface{}) error {
