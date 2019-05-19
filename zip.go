@@ -11,7 +11,8 @@ import (
 func createZip(templateName string) {
 
 	//get files from standard folder
-	files, err := listFiles("./tmp")
+	os.Rename("./tmp", fmt.Sprintf("./%s", templateName))
+	files, err := listFiles(fmt.Sprintf("./%s", templateName))
 	if err != nil {
 		panic(err)
 	}

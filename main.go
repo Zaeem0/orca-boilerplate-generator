@@ -54,6 +54,11 @@ type CreativeTemplateData struct {
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.
+		Name("index").
+		Methods("GET").
+		Path("/").
+		HandlerFunc(Index)
+	router.
 		Name("posting data").
 		Methods("POST").
 		Path("/").
@@ -63,9 +68,18 @@ func main() {
 		Methods("GET").
 		Path("/download/{templateGroupName}").
 		HandlerFunc(DownloadZip)
+	router.
+		Name("post data and download zip").
+		Methods("POST").
+		Path("/submit").
+		HandlerFunc(CreateAndDownload)
 
 	methods := []string{"GET", "POST", "PUT", "DELETE"}
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedMethods(methods))(router)))
+}
+
+func Index(w http.ResponseWriter, r *http.Request) {
+	ResponseJSON(w, []string{"Index Page"})
 }
 
 func DownloadZip(w http.ResponseWriter, r *http.Request) {
@@ -102,6 +116,39 @@ func ReceiveData(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	ResponseJSON(w, data)
+}
+
+func CreateAndDownload(w http.ResponseWriter, r *http.Request) {
+	var data CreativeTemplateData
+	if DecodeBody(w, r, &data) != nil {
+		return
+	}
+
+	//TODO: handle error if bad data or can't create zip
+	data.cleanData()
+	log.Println(data)
+	generateBoilerplate(data)
+	createZip(data.TemplateGroupName)
+
+	zipfile := data.TemplateGroupName
+	f, err := os.Open(fmt.Sprintf("./downloads/%s.zip", zipfile))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		ResponseJSON(w, []string{fmt.Sprintf("Failed to download: %s.zip", zipfile)})
+		return
+	}
+
+	_, file := filepath.Split(f.Name())
+
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file))
+
+	// copy the file contents to the http Writer
+	_, err = io.Copy(w, f)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (data *CreativeTemplateData) cleanData() {
