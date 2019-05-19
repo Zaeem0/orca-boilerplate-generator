@@ -17,7 +17,7 @@ const getValues = (e) => {
 };
 
 function send(data) {
-  fetch("http://ec2-52-14-174-57.us-east-2.compute.amazonaws.com:3000/", {
+  fetch("https://templategen.com/", {
     method: "post",
     body: JSON.stringify(data)
   }).then(function(response) {
@@ -31,7 +31,7 @@ function send(data) {
 
 function download(zipName){
   document.querySelector('.error').style.display = "none"
-  var url= "http://ec2-52-14-174-57.us-east-2.compute.amazonaws.com:3000/download/" + zipName;
+  var url= "https://templategen.com/download/" + zipName;
   window.open(url, '_blank');
 }
 
