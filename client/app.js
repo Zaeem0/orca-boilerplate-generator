@@ -17,7 +17,7 @@ const getValues = (e) => {
 };
 
 function send(data) {
-  fetch("https://templategen.com/", {
+  fetch("https://templategen.com/submit", {
     method: "post",
     body: JSON.stringify(data)
   }).then(function(response) {
@@ -32,7 +32,9 @@ function send(data) {
 function download(zipName){
   document.querySelector('.error').style.display = "none"
   var url= "https://templategen.com/download/" + zipName;
-  window.open(url, '_blank');
+  // window.open(url, '_blank');
+  location.assign(url);
+
 }
 
 const addListeners = () => {
