@@ -12,24 +12,39 @@ import (
 	svg "github.com/ajstarks/svgo"
 )
 
-func generateBoilerplate(data CreativeTemplateData) {
+func generateBoilerplate(data CreativeTemplateData) error {
 	data.Frames = append(data.Frames, data.Start...)
 	data.Frames = append(data.Frames, data.Middle...)
 	data.Frames = append(data.Frames, data.End...)
 
+	var folderStructure = []string{"./tmp", "./tmp/CreativeTemplates", "./tmp/FrameTemplates", "./tmp/GlobalTemplates", "./tmp/ThumbnailImages"}
+
 	//Octal value 0700 for user
-	os.Mkdir("./tmp", 0700)
-	os.Mkdir("./tmp/CreativeTemplates", 0700)
-	os.Mkdir("./tmp/FrameTemplates", 0700)
-	os.Mkdir("./tmp/GlobalTemplates", 0700)
-	os.Mkdir("./tmp/ThumbnailImages", 0700)
+	for _, folder := range folderStructure {
+		if err := os.Mkdir(folder, 0700); err != nil {
+			return err
+		}
+	}
 
-	generateCreativeTemplates(data)
-	generateFrameTemplates(data.Sizes, data.Frames)
-	generateGlobalTemplates(data.Sizes)
-	generateThumbnails(data.Sizes, data.Frames)
+	var err error
+	err = generateCreativeTemplates(data)
+	if err != nil {
+		return err
+	}
+	err = generateFrameTemplates(data.Sizes, data.Frames)
+	if err != nil {
+		return err
+	}
+	err = generateGlobalTemplates(data.Sizes)
+	if err != nil {
+		return err
+	}
+	err = generateThumbnails(data.Sizes, data.Frames)
+	if err != nil {
+		return err
+	}
 
-	// os.Rename("./tmp", fmt.Sprintf("./%s", data.TemplateGroupName))
+	return nil
 }
 
 func emptyFrame(clickout bool) []byte {
@@ -43,19 +58,26 @@ func emptyFrame(clickout bool) []byte {
 	return jsonData
 }
 
-func generateThumbnails(sizes []string, frames []string) {
+func generateThumbnails(sizes []string, frames []string) error {
 	for _, size := range sizes {
 		//.../ThumbnailImages/[SIZE]
 		os.Mkdir(fmt.Sprintf("./tmp/ThumbnailImages/%s", size), 0700)
 		for idx := range frames {
-			createThumbnail(size, frames[idx])
+			err := createThumbnail(size, frames[idx])
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func createThumbnail(size string, frameName string) {
+func createThumbnail(size string, frameName string) error {
 	//.../ThumbnailImages/[SIZE]/[SIZE]-[Frame].svg
-	thumbs, _ := os.Create(fmt.Sprintf("./tmp/ThumbnailImages/%s/%s-%s.svg", size, size, frameName))
+	thumbs, err := os.Create(fmt.Sprintf("./tmp/ThumbnailImages/%s/%s-%s.svg", size, size, frameName))
+	if err != nil {
+		return err
+	}
 
 	w := bufio.NewWriter(thumbs)
 	canvas := svg.New(w)
@@ -69,26 +91,36 @@ func createThumbnail(size string, frameName string) {
 	canvas.Text(width/2, height/2, fmt.Sprintf("%s", frameName), "text-anchor:middle;font-size:40px;fill:black;font-family: Helvetica;")
 	canvas.End()
 	w.Flush()
+
+	return nil
 }
 
-func generateGlobalTemplates(sizes []string) {
+func generateGlobalTemplates(sizes []string) error {
 	for _, size := range sizes {
 		//.../GlobalTemplates/[SIZE].json
-		_ = ioutil.WriteFile(fmt.Sprintf("./tmp/GlobalTemplates/%s.json", size), emptyFrame(true), 0644)
+		err := ioutil.WriteFile(fmt.Sprintf("./tmp/GlobalTemplates/%s.json", size), emptyFrame(true), 0644)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func generateFrameTemplates(sizes []string, frames []string) {
+func generateFrameTemplates(sizes []string, frames []string) error {
 	for _, size := range sizes {
 		os.Mkdir(fmt.Sprintf("./tmp/FrameTemplates/%s", size), 0700)
 		for f := range frames {
 			//.../FrameTemplates/[SIZE]/[SIZE]-[Frame].json
-			_ = ioutil.WriteFile(fmt.Sprintf("./tmp/FrameTemplates/%s/%s-%s.json", size, size, frames[f]), emptyFrame(false), 0644)
+			err := ioutil.WriteFile(fmt.Sprintf("./tmp/FrameTemplates/%s/%s-%s.json", size, size, frames[f]), emptyFrame(false), 0644)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func generateCreativeTemplates(data CreativeTemplateData) {
+func generateCreativeTemplates(data CreativeTemplateData) error {
 	var tempJSON []CreativeTemplates
 	var obj CreativeTemplates
 
@@ -98,8 +130,14 @@ func generateCreativeTemplates(data CreativeTemplateData) {
 		obj.Size = size
 		//set width and height properties
 		wxh := strings.Split(size, "x")
-		width, _ := strconv.Atoi(wxh[0])
-		height, _ := strconv.Atoi(wxh[1])
+		width, err := strconv.Atoi(wxh[0])
+		if err != nil {
+			return err
+		}
+		height, err := strconv.Atoi(wxh[1])
+		if err != nil {
+			return err
+		}
 		obj.Width = width
 		obj.Height = height
 
@@ -117,5 +155,9 @@ func generateCreativeTemplates(data CreativeTemplateData) {
 
 	//indented JSON with 2 spaces
 	jsonData, _ := json.MarshalIndent(tempJSON, "", "  ")
-	_ = ioutil.WriteFile(fmt.Sprintf("./tmp/CreativeTemplates/%s.json", data.TemplateSet), jsonData, 0644)
+	err := ioutil.WriteFile(fmt.Sprintf("./tmp/CreativeTemplates/%s.json", data.TemplateSet), jsonData, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }

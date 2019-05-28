@@ -51,31 +51,39 @@ type CreativeTemplateData struct {
 	Frames []string
 }
 
+const (
+	STATIC_DIR = "/client/"
+)
+
 func main() {
-	router := mux.NewRouter().StrictSlash(true)
-	router.
+	apiRouter := mux.NewRouter().StrictSlash(true)
+	apiRouter.
 		Name("index").
 		Methods("GET").
-		Path("/").
+		Path("/api/").
 		HandlerFunc(Index)
-	router.
+	apiRouter.
 		Name("posting data").
 		Methods("POST").
-		Path("/").
+		Path("/api/").
 		HandlerFunc(ReceiveData)
-	router.
+	apiRouter.
 		Name("download zip").
 		Methods("GET").
-		Path("/download/{templateGroupName}").
+		Path("/api/download/{templateGroupName}").
 		HandlerFunc(DownloadZip)
-	router.
+	apiRouter.
 		Name("post data and download zip").
 		Methods("POST").
-		Path("/submit").
+		Path("/api/submit").
 		HandlerFunc(CreateAndDownload)
 
+	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir("client")))
+	mux.Handle("/api/", apiRouter)
+
 	methods := []string{"GET", "POST", "PUT", "DELETE"}
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedMethods(methods))(router)))
+	log.Fatal(http.ListenAndServe(":3000", handlers.CORS(handlers.AllowedMethods(methods))(mux)))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -111,8 +119,18 @@ func ReceiveData(w http.ResponseWriter, r *http.Request) {
 	}
 	data.cleanData()
 	log.Println(data)
-	generateBoilerplate(data)
-	createZip(data.TemplateGroupName)
+	err := generateBoilerplate(data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		ResponseJSON(w, err)
+		return
+	}
+	err = createZip(data.TemplateGroupName)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		ResponseJSON(w, err)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	ResponseJSON(w, data)

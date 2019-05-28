@@ -22,25 +22,17 @@ function send(data) {
     body: JSON.stringify(data)
   }).then(function(response) {
     console.log(response)
-    download(data.templateGroupName, response.body)
+    download(data.templateGroupName);
   }).catch((err) => {
     console.log(err)
     document.querySelector('.error').style.display = "block"
   })
 }
 
-function download(zipName, response){
-  fetch("https://templategen.com/download/"+zipName, {
-    method: "post"
-  }).then(function(response) {
-    console.log(response)
-    var blob = new Blob([response.body], {type: "octet/stream"});
-        saveAs(blob, zipName + ".zip");
-  }).catch((err) => {
-    console.log(err)
-    document.querySelector('.error').style.display = "block"
-  })
-
+function download(zipName){
+  document.querySelector('.error').style.display = "none"
+  var url= "https://templategen.com/download/" + zipName;
+  location.assign(url);
 }
 
 const addListeners = () => {

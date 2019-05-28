@@ -8,23 +8,27 @@ import (
 	"path/filepath"
 )
 
-func createZip(templateName string) {
+func createZip(templateName string) error {
 
 	//get files from standard folder
 	os.Rename("./tmp", fmt.Sprintf("./%s", templateName))
 	files, err := listFiles(fmt.Sprintf("./%s", templateName))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	os.Mkdir("./downloads", 0700)
-	zipMe(files, fmt.Sprintf("./downloads/%s.zip", templateName))
-
+	err = zipMe(files, fmt.Sprintf("./downloads/%s.zip", templateName))
+	if err != nil {
+		return err
+	}
 	for _, f := range files {
 		fmt.Println(f)
 	}
 	//delete folder now that zip is created
-	os.RemoveAll("./tmp")
+	os.RemoveAll(fmt.Sprintf("./%s", templateName))
 	fmt.Println("Done!")
+
+	return nil
 }
 
 func listFiles(root string) ([]string, error) {
