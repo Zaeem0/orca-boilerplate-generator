@@ -17,7 +17,7 @@ const getValues = (e) => {
 };
 
 function send(data) {
-  fetch("https://templategen.com/", {
+  fetch("https://templategen.com/api/", {
     method: "post",
     body: JSON.stringify(data)
   }).then(function(response) {
@@ -31,7 +31,7 @@ function send(data) {
 
 function download(zipName){
   document.querySelector('.error').style.display = "none"
-  var url= "https://templategen.com/download/" + zipName;
+  var url= "https://templategen.com/api/download/" + zipName;
   location.assign(url);
 }
 
