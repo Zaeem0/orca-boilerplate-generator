@@ -51,7 +51,7 @@ func emptyFrame(clickout bool) []byte {
 	var obj frame
 	obj.Template = []script{}
 	if clickout {
-		obj.Template = append(obj.Template, script{T: "s", S: "ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2V4aXQnKS5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsIGV4aXRDbGlja0hhbmRsZXIpOw=="})
+		obj.Template = append(obj.Template, script{T: "j", S: "ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2V4aXQnKS5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsIGV4aXRDbGlja0hhbmRsZXIpOw=="})
 	}
 	obj.Config = []string{}
 	jsonData, _ := json.MarshalIndent(obj, "", "  ")
