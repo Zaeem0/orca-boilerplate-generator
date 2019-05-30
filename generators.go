@@ -16,7 +16,7 @@ func generateBoilerplate(data CreativeTemplateData) error {
 	data.Frames = append(data.Frames, data.Start...)
 	data.Frames = append(data.Frames, data.Middle...)
 	data.Frames = append(data.Frames, data.End...)
-
+	os.RemoveAll("./tmp")
 	var folderStructure = []string{"./tmp", "./tmp/CreativeTemplates", "./tmp/FrameTemplates", "./tmp/GlobalTemplates", "./tmp/ThumbnailImages"}
 
 	//Octal value 0700 for user

@@ -55,7 +55,18 @@ const (
 	STATIC_DIR = "/client/"
 )
 
+var logToFile *log.Logger
+
 func main() {
+	f, err := os.OpenFile("text.log",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	logToFile = log.New(f, "", log.LstdFlags)
+
 	apiRouter := mux.NewRouter().StrictSlash(true)
 	apiRouter.
 		Name("index").
@@ -72,11 +83,6 @@ func main() {
 		Methods("GET").
 		Path("/api/download/{templateGroupName}").
 		HandlerFunc(DownloadZip)
-	apiRouter.
-		Name("post data and download zip").
-		Methods("POST").
-		Path("/api/submit").
-		HandlerFunc(CreateAndDownload)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("client")))
@@ -92,11 +98,12 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func DownloadZip(w http.ResponseWriter, r *http.Request) {
 	zipfile := mux.Vars(r)["templateGroupName"]
+	logToFile.Printf("Attempt made to download: %s\n", zipfile)
 	f, err := os.Open(fmt.Sprintf("./downloads/%s.zip", zipfile))
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
-		ResponseJSON(w, []string{fmt.Sprintf("Failed to download: %s.zip", zipfile)})
+		ResponseJSON(w, []string{fmt.Sprintf("%s.zip does not exist", zipfile)})
 		return
 	}
 
@@ -108,8 +115,10 @@ func DownloadZip(w http.ResponseWriter, r *http.Request) {
 	// copy the file contents to the http Writer
 	_, err = io.Copy(w, f)
 	if err != nil {
+		logToFile.Printf("Failed to download %s\n", zipfile)
 		log.Fatal(err)
 	}
+	logToFile.Printf("Successfully downloaded %s\n", zipfile)
 }
 
 func ReceiveData(w http.ResponseWriter, r *http.Request) {
@@ -123,50 +132,20 @@ func ReceiveData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		ResponseJSON(w, err)
+		logToFile.Printf("Failed to generate boilerplate for: %s\n", data.TemplateGroupName)
 		return
 	}
+	logToFile.Printf("Succesfully generated boilerplate for: %s\n", data.TemplateGroupName)
+
 	err = createZip(data.TemplateGroupName)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		ResponseJSON(w, err)
 		return
 	}
-
+	logToFile.Printf("Succesfully generated ZIP for: %s\n", data.TemplateGroupName)
 	w.WriteHeader(http.StatusCreated)
 	ResponseJSON(w, data)
-}
-
-func CreateAndDownload(w http.ResponseWriter, r *http.Request) {
-	var data CreativeTemplateData
-	if DecodeBody(w, r, &data) != nil {
-		return
-	}
-
-	//TODO: handle error if bad data or can't create zip
-	data.cleanData()
-	log.Println(data)
-	generateBoilerplate(data)
-	createZip(data.TemplateGroupName)
-
-	zipfile := data.TemplateGroupName
-	f, err := os.Open(fmt.Sprintf("./downloads/%s.zip", zipfile))
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusNotFound)
-		ResponseJSON(w, []string{fmt.Sprintf("Failed to download: %s.zip", zipfile)})
-		return
-	}
-
-	_, file := filepath.Split(f.Name())
-
-	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file))
-
-	// copy the file contents to the http Writer
-	_, err = io.Copy(w, f)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (data *CreativeTemplateData) cleanData() {

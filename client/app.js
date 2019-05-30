@@ -17,7 +17,7 @@ const getValues = (e) => {
 };
 
 function send(data) {
-  fetch("https://templategen.com/api/", {
+  fetch("http://localhost:3000/api/", {
     method: "post",
     body: JSON.stringify(data)
   }).then(function(response) {
@@ -31,7 +31,7 @@ function send(data) {
 
 function download(zipName){
   document.querySelector('.error').style.display = "none"
-  var url= "https://templategen.com/api/download/" + zipName;
+  var url= "http://localhost:3000/api/download/" + zipName;
   location.assign(url);
 }
 
@@ -66,6 +66,12 @@ function cleanValue (object) {
   object.end = object.end.replace(/\s+/g, "");
   object.end = object.end.split(",");
 
+  //Dont send array with an empty string if frames left empty on purpose
+  for (prop in object){
+    if (object.hasOwnProperty(prop) && object[prop] == "" && (prop == "start" || prop == "middle" || prop == "end")) {
+        object[prop] = []
+    }
+  }
   //str to int
   object.frameLimit = Number(object.frameLimit);
   object.frameMinCount = Number(object.frameMinCount);
