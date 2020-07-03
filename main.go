@@ -56,7 +56,7 @@ func main() {
 	router.
 		Name("index").
 		Methods("GET").
-		Path("/").
+		Path("/ping").
 		HandlerFunc(Index)
 	router.
 		Name("posting data").
@@ -75,7 +75,7 @@ func main() {
 		HandlerFunc(CreateAndDownload)
 
 	methods := []string{"GET", "POST", "PUT", "DELETE"}
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedMethods(methods))(router)))
+	log.Fatal(http.ListenAndServe(":3000", handlers.CORS(handlers.AllowedMethods(methods))(router)))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
